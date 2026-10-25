@@ -41,6 +41,7 @@ $("loginForm").onsubmit = (e) => {
   const res = Auth.verify(id, pw);
   if (!res.ok) {
     if (res.reason === "none") { $("emailMsg").textContent = t("log.err.none"); $("email").classList.add("err"); }
+    else if (res.reason === "server" || res.reason === "network") { $("pwMsg").textContent = t(res.reason === "network" ? "sig.err.network" : "sig.err.server"); }
     else { $("pwMsg").textContent = t("log.err.bad"); $("pw").classList.add("err"); }
     return;
   }
