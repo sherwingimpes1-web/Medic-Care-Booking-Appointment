@@ -15,6 +15,7 @@ import time
 from datetime import timedelta
 
 from flask import Flask, jsonify, request, send_from_directory, session
+from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import db
@@ -60,6 +61,19 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(days=30),
     MAX_CONTENT_LENGTH=5 * 1024 * 1024,                              # profile photo is a data URL
 )
+
+@app.errorhandler(Exception)
+def on_error(e):
+    """Anything unexpected (e.g. the database is unreachable) is logged for the Render logs
+    (traceback only - never passwords) and returned as JSON, so the website can tell it apart
+    from a real "account already exists" answer (HTTP 409)."""
+    if isinstance(e, HTTPException):
+        return e
+    app.logger.exception("Unhandled error on %s %s", request.method, request.path)
+    if request.path.startswith("/api/"):
+        return jsonify(ok=False, error="server"), 500
+    return "Server error", 500
+
 
 PW_VERIFIED_WINDOW = 300          # seconds: how long a "checkPassword" stays valid for setPassword
 DATA_KEY = re.compile(r"^[A-Za-z0-9_.\-]{1,64}$")
