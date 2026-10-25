@@ -12,9 +12,10 @@ import os
 import re
 import secrets
 import time
+import traceback
 from datetime import timedelta
 
-from flask import Flask, jsonify, request, send_from_directory, session
+from flask import Flask, g, jsonify, request, send_from_directory, session
 from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -73,6 +74,21 @@ def on_error(e):
     if request.path.startswith("/api/"):
         return jsonify(ok=False, error="server"), 500
     return "Server error", 500
+
+
+@app.before_request
+def _start_timer():
+    g.t0 = time.perf_counter()
+
+
+@app.after_request
+def _log_api_timing(resp):
+    """One line per API call in the Render logs, e.g.  [req] POST /api/signup -> 200 in 2310ms
+    so you can see exactly which call is slow."""
+    t0 = g.get("t0")
+    if t0 is not None and request.path.startswith("/api/"):
+        print(f"[req] {request.method} {request.path} -> {resp.status_code} in {(time.perf_counter() - t0) * 1000:.0f}ms", flush=True)
+    return resp
 
 
 PW_VERIFIED_WINDOW = 300          # seconds: how long a "checkPassword" stays valid for setPassword
@@ -137,11 +153,9 @@ def body():
 
 
 def current():
-    """Signed-in account id, or None (also None if the account was deleted)."""
-    uid = session.get("uid")
-    if uid and db.get_user(uid):
-        return uid
-    return None
+    """Signed-in account id from the signed login cookie. No database call here (this used to cost
+    one extra query on EVERY request). /api/me checks that the account still exists."""
+    return session.get("uid")
 
 
 def profile_of(user):
@@ -193,7 +207,7 @@ def verify():
 @app.post("/api/login")                        # Auth.login(raw)
 def login():
     uid = normalize(body().get("id"))
-    if not uid or session.get("pending") != uid or not db.get_user(uid):
+    if not uid or session.get("pending") != uid:          # the signed cookie proves /verify succeeded
         return jsonify(ok=False, error="verify_first"), 403
     session.clear()
     session["uid"] = uid
@@ -211,9 +225,12 @@ def logout():
 def me():
     uid = current()
     if not uid:
+        return jsonify(user=None)                       # not signed in: answers instantly, no database
+    acct = db.get_account(uid)                          # user + saved data in a single query
+    if not acct:                                        # account was deleted
+        session.clear()
         return jsonify(user=None)
-    user = db.get_user(uid)
-    return jsonify(user={"id": uid, "profile": profile_of(user), "data": db.get_all_data(uid)})
+    return jsonify(user={"id": uid, "profile": profile_of(acct), "data": acct["data"]})
 
 
 @app.put("/api/profile")                       # Auth.saveProfile(patch)
@@ -223,14 +240,21 @@ def save_profile(uid):
     for k in ("name", "email", "phone", "code"):
         if k in patch and len(str(patch[k])) > 200:
             return jsonify(ok=False, error="too_long"), 400
-    db.update_profile(uid, patch)
-    return jsonify(ok=True, profile=profile_of(db.get_user(uid)))
+    row = db.update_profile(uid, patch)
+    if not row:
+        session.clear()
+        return jsonify(ok=False, error="unauthorized"), 401
+    return jsonify(ok=True, profile=profile_of(row))
 
 
 @app.post("/api/password/check")               # Auth.checkPassword(pw)
 @login_required
 def password_check(uid):
-    ok = check_password_hash(db.get_user(uid)["pw_hash"], body().get("password") or "")
+    user = db.get_user(uid)
+    if not user:
+        session.clear()
+        return jsonify(ok=False, error="unauthorized"), 401
+    ok = check_password_hash(user["pw_hash"], body().get("password") or "")
     if ok:
         session["pw_verified_at"] = time.time()
     return jsonify(ok=ok)
@@ -266,7 +290,9 @@ def set_data(uid, key):
     d = body()
     if "value" not in d:
         return jsonify(ok=False, error="missing_value"), 400
-    db.set_data(uid, key, d["value"])
+    if not db.set_data(uid, key, d["value"]):
+        session.clear()
+        return jsonify(ok=False, error="unauthorized"), 401
     return jsonify(ok=True)
 
 
@@ -276,7 +302,27 @@ def root():
     return send_from_directory(FRONTEND, "index.html")
 
 
-db.init_db()
+@app.get("/healthz")                           # instant, never touches the database: point a keep-awake monitor here
+def healthz():
+    return "ok", 200
+
+
+@app.get("/api/health")                        # open this in a browser to see how fast the database answers
+def health():
+    t0 = time.perf_counter()
+    try:
+        db.ping()
+        return jsonify(ok=True, db_ms=round((time.perf_counter() - t0) * 1000))
+    except Exception as e:                      # only the error TYPE is shown, never the connection string
+        app.logger.exception("Health check: database unreachable")
+        return jsonify(ok=False, error=type(e).__name__, after_ms=round((time.perf_counter() - t0) * 1000)), 503
+
+
+try:
+    db.init_db()
+except Exception:                               # don't crash the whole site if the database is briefly unreachable
+    print("WARNING: db.init_db() failed at startup; continuing (tables probably exist already):", flush=True)
+    traceback.print_exc()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=os.environ.get("DEBUG") == "1")
