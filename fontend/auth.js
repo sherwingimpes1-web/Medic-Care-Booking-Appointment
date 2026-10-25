@@ -1,0 +1,169 @@
+/* MEDIC CARE – shared accounts, login session and sidebar.
+   Ang account/login/data ay nasa Python backend na (backend/app.py), hindi na sa localStorage.
+   Same pa rin ang mga function (Auth.createUser, Auth.verify, Auth.login, ...) kaya hindi
+   kailangang galawin ang ibang pages.
+
+   Paano gumagana:
+     - Pag-load ng page, isang beses kukunin ang session + profile + data sa /api/me (cache).
+     - Reads (profile, getData, getAppointments...) galing sa cache -> instant.
+     - Writes at password checks diretso sa server (synchronous request, para pareho pa rin
+       ang behavior ng dating functions). Pwede itong gawing async later kung gusto.
+
+   Page rules (put on the <html> tag):
+     data-requires-login  → visitors who are not signed in are sent to index.html
+     data-guest-only      → signed-in users are sent to homepage.html                       */
+(function () {
+  const LOGIN = "index.html", HOME = "homepage.html";
+  const API = "/api";
+
+  /* ---------- Server calls ---------- */
+  function call(method, path, body) {
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open(method, API + path, false);                       // synchronous on purpose (see note above)
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.send(body === undefined ? null : JSON.stringify(body));
+      let data = {};
+      try { data = JSON.parse(xhr.responseText || "{}"); } catch (e) {}
+      return { status: xhr.status, data };
+    } catch (e) {
+      return { status: 0, data: { ok: false, error: "network" } };
+    }
+  }
+
+  /* ---------- Cache of the signed-in account ---------- */
+  let cache = null;                                              // { id, profile, data } or null
+  function refresh() {
+    const r = call("GET", "/me");
+    cache = r.status === 200 && r.data.user ? r.data.user : null;
+  }
+  refresh();
+
+  /* ---------- Email / phone ---------- */
+  function normalize(raw) {
+    let s = String(raw || "").trim();
+    if (s.includes("@")) return s.toLowerCase();
+    s = s.replace(/[\s\-().]/g, "");
+    if (/^\+63\d{10}$/.test(s)) s = "0" + s.slice(3);        // +63 917… → 0917…
+    else if (/^63\d{10}$/.test(s)) s = "0" + s.slice(2);
+    return s;
+  }
+  const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+  const isPhone = (v) => /^\+?\d{7,15}$/.test(v);
+  const validId = (raw) => { const n = normalize(raw); return isEmail(n) || isPhone(n); };
+
+  /* ---------- Accounts ---------- */
+  function nameFromId(n) {
+    if (!isEmail(n)) return "Patient";
+    const words = n.split("@")[0].split(/[._\-+0-9]+/).filter(Boolean);
+    return words.map((w) => w[0].toUpperCase() + w.slice(1)).join(" ") || "Patient";
+  }
+  function defaultProfile(n) {
+    return { name: nameFromId(n), email: isEmail(n) ? n : "", phone: isEmail(n) ? "" : n, code: "+63", photo: "" };
+  }
+
+  function createUser(raw, pw) {
+    const r = call("POST", "/signup", { id: raw, password: pw });
+    return r.data && r.data.ok ? { ok: true, id: r.data.id } : { ok: false, error: (r.data && r.data.error) || "error" };
+  }
+  function verify(raw, pw) {
+    const r = call("POST", "/verify", { id: raw, password: pw });
+    if (r.data && r.data.ok) return { ok: true, id: r.data.id };
+    return { ok: false, reason: (r.data && r.data.reason) || "bad" };
+  }
+
+  const current = () => (cache ? cache.id : null);
+  function login(raw) { call("POST", "/login", { id: raw }); refresh(); }
+  function logout() { call("POST", "/logout"); cache = null; }
+
+  const profile = () => (cache ? { ...defaultProfile(cache.id), ...cache.profile } : defaultProfile(""));
+  function saveProfile(patch) {
+    if (!cache) return null;
+    const r = call("PUT", "/profile", patch);
+    if (r.data && r.data.ok) cache.profile = r.data.profile;
+    return null;
+  }
+  const checkPassword = (pw) => { if (!cache) return false; const r = call("POST", "/password/check", { password: pw }); return !!(r.data && r.data.ok); };
+  const setPassword = (pw) => { if (cache) call("PUT", "/password", { password: pw }); };
+  function deleteAccount() { if (!cache) return; call("DELETE", "/account"); cache = null; }
+
+  // Per-account data (appointments, records…)
+  function getData(key, fallback) {
+    return cache && cache.data && key in cache.data ? cache.data[key] : fallback;
+  }
+  function setData(key, value) {
+    if (!cache) return null;
+    cache.data = cache.data || {};
+    cache.data[key] = value;
+    call("PUT", "/data/" + encodeURIComponent(key), { value });
+    return null;
+  }
+
+  /* ---------- Appointments (shared by Appointment, Booking and Medical History pages) ---------- */
+  // New accounts start with no appointments
+  const getAppointments = () => getData("appointments", []).map((a) => (a.status === "Pending" ? { ...a, status: "Confirmed" } : a));
+  const saveAppointments = (list) => setData("appointments", list);
+  const todayISO = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  // Cancelled stays Cancelled; a visit whose date has passed counts as Completed; everything else is Confirmed
+  function recordState(a) {
+    if (a.status === "Cancelled") return "Cancelled";
+    if (a.status === "Completed" || (a.status === "Confirmed" && a.date < todayISO())) return "Completed";
+    return "Confirmed";
+  }
+
+  /* ---------- Page guard (runs immediately) ---------- */
+  const root = document.documentElement;
+  if (root.hasAttribute("data-requires-login") && !current()) location.replace(LOGIN);
+  else if (root.hasAttribute("data-guest-only") && current()) location.replace(HOME);
+
+  /* ---------- Sidebar (shared by every signed-in page) ---------- */
+  function hydrateSidebar() {
+    const $ = (id) => document.getElementById(id);
+    if (!$("sideName")) return;
+    const p = profile();
+    $("sideName").textContent = p.name || "Patient";
+    $("sideEmail").textContent = p.email || p.phone || "";
+    const av = $("sideAvatar");
+    av.textContent = "";
+    if (p.photo) { const img = document.createElement("img"); img.src = p.photo; img.alt = ""; av.appendChild(img); }
+    else av.textContent = ((p.name || "?").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("") || "?").toUpperCase();
+  }
+
+  function initSidebar() {
+    const $ = (id) => document.getElementById(id);
+    const sidebar = $("sidebar"), scrim = $("scrim"), menuBtn = $("menuBtn");
+    function setSidebar(open) {
+      sidebar.classList.toggle("open", open);
+      scrim.classList.toggle("open", open);
+      sidebar.setAttribute("aria-hidden", String(!open));
+      menuBtn.setAttribute("aria-expanded", String(open));
+    }
+    menuBtn.addEventListener("click", () => setSidebar(!sidebar.classList.contains("open")));
+    $("closeSidebar").addEventListener("click", () => setSidebar(false));
+    scrim.addEventListener("click", () => setSidebar(false));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") setSidebar(false); });
+
+    $("navSearch").addEventListener("input", (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      let shown = 0;
+      document.querySelectorAll("#nav a").forEach((a) => {
+        const match = a.textContent.toLowerCase().includes(q);
+        a.hidden = !match;
+        if (match) shown++;
+      });
+      $("noMatch").hidden = shown > 0;
+    });
+
+    const out = document.querySelector(".logout");
+    if (out) out.addEventListener("click", logout);       // then the link takes the user to index.html
+
+    hydrateSidebar();
+    return { setSidebar };
+  }
+
+  window.Auth = {
+    normalize, isEmail, isPhone, validId, createUser, verify, current, login, logout,
+    profile, saveProfile, checkPassword, setPassword, deleteAccount, getData, setData,
+    initSidebar, hydrateSidebar, getAppointments, saveAppointments, recordState, todayISO, LOGIN, HOME
+  };
+})();

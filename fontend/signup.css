@@ -1,0 +1,152 @@
+
+/* ===== RESET ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ===== PAGE BACKGROUND ===== */
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(
+        to bottom,
+        #ffffff 0%,
+        #edf4fd 35%,
+        #d5e5fa 70%,
+        #bdd5f3 100%
+    );
+    color: #111827;
+}
+
+/* ===== SIGNUP CONTAINER ===== */
+.signup-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 25px 18px;
+}
+
+/* ===== SIGNUP FORM ===== */
+.signup-form {
+    width: 100%;
+    max-width: 360px;
+}
+
+/* ===== HEADING ===== */
+.signup-form h1 {
+    font-size: 25px;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+/* ===== SUBTITLE ===== */
+.subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #586273;
+    margin-bottom: 28px;
+}
+
+/* ===== FORM GROUPS ===== */
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* ===== LABELS ===== */
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 7px;
+}
+
+/* ===== INPUT FIELDS ===== */
+.form-group input {
+    width: 100%;
+    height: 43px;
+    padding: 0 14px;
+    border: 1px solid #78869b;
+    border-radius: 25px;
+    background: transparent;
+    font-size: 12px;
+    color: #111827;
+    outline: none;
+}
+
+/* ===== INPUT PLACEHOLDER ===== */
+.form-group input::placeholder {
+    color: #78869b;
+}
+
+/* ===== INPUT FOCUS ===== */
+.form-group input:focus {
+    border-color: #1675b7;
+    box-shadow: 0 0 0 2px #1675b726;
+}
+
+/* ===== CREATE ACCOUNT BUTTON ===== */
+.create-button {
+    display: block;
+    margin: 22px auto 0;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 25px;
+    background: #1675b7;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.create-button:hover {
+    background: #105d96;
+}
+
+/* ===== LOGIN LINK ===== */
+.login-link {
+    text-align: center;
+    font-size: 12px;
+    margin-top: 18px;
+}
+
+.login-link a {
+    color: #245b9b;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media screen and (max-width: 480px) {
+    .signup-form {
+        max-width: 340px;
+    }
+
+    .signup-form h1 {
+        font-size: 23px;
+    }
+}
+
+/* ===== VALIDATION MESSAGES ===== */
+.msg {
+    color: #c0182b;
+    font-size: 11px;
+    min-height: 14px;
+    margin: 5px 0 0 14px;
+}
+
+.form-group input.invalid {
+    border-color: #c0182b;
+}

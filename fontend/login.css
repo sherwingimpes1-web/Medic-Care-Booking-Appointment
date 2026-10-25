@@ -1,0 +1,304 @@
+/* ===== Base / variables ===== */
+
+:root {
+  color-scheme: light;
+  --blue: #5b7bd5;
+  --link: #2a2ae0;
+  --ink: #111;
+  --line: #25305e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--ink);
+}
+
+/* ===== Page layout ===== */
+
+.page {
+  display: flex;
+  min-height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, #d8d8d8 0%, #c3cbe6 55%, #0b57e8 100%);
+}
+
+/* The left layer now covers the whole page so the login card sits in the true center.
+   The picture stays on the right exactly as before. */
+.left {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  pointer-events: none;
+}
+
+.right {
+  flex: 0 0 53%;
+  margin-left: auto;
+  position: relative;
+  background: var(--photo, none) center/cover, linear-gradient(160deg, #dfe6fb, #8ea6e8 60%, #6f8fe0);
+}
+
+/* ===== Login form (centered card) ===== */
+
+.form {
+  width: 100%;
+  max-width: 320px;
+  pointer-events: auto;
+  background: linear-gradient(180deg, #a7b8f2, #dcdcdc);
+  border: 1px solid #888;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  padding: 34px 28px 28px;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0 0 2px;
+  font-weight: 700;
+}
+
+.sub {
+  font-size: 13px;
+  margin: 0 0 30px;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.field {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+input {
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 0 16px;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+input:focus {
+  box-shadow: 0 0 0 2px rgba(15, 108, 189, 0.35);
+}
+
+input.err {
+  border-color: #c0182b;
+}
+
+.eye {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+}
+
+.msg {
+  color: #c0182b;
+  font-size: 11px;
+  min-height: 14px;
+  margin: -10px 0 4px 14px;
+}
+
+.forgot {
+  display: block;
+  text-align: right;
+  font-size: 11px;
+  margin: -10px 4px 22px 0;
+}
+
+a,
+.linkbtn {
+  color: var(--link);
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  font: inherit;
+  padding: 0;
+}
+
+a:hover,
+.linkbtn:hover {
+  text-decoration: underline;
+}
+
+/* ===== Buttons & links ===== */
+
+.btn {
+  display: block;
+  margin: 0 auto;
+  border: 0;
+  border-radius: 999px;
+  background: var(--blue);
+  color: #fff;
+  font: 600 12px Inter, sans-serif;
+  height: 32px;
+  padding: 0 24px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  filter: brightness(1.1);
+}
+
+.signup {
+  text-align: center;
+  font-size: 13px;
+  margin-top: 22px;
+}
+
+/* ===== Popups (forgot password / check email) =====
+   Full-screen gray-to-blue background with a centered card, like the design. */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #dcdcdc 0%, #d6d8de 25%, #7f9cf0 70%, #0b57e8 100%);
+  padding: 16px;
+  z-index: 5;
+}
+
+.overlay.show {
+  display: flex;
+}
+
+.card {
+  width: 100%;
+  max-width: 265px;
+  background: linear-gradient(180deg, #a7b8f2, #dcdcdc);
+  border: 1px solid #888;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  padding: 34px 22px 24px;
+  text-align: center;
+}
+
+.card h2 {
+  margin: 0 0 4px;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.card p {
+  margin: 0 0 20px;
+  font-size: 9.5px;
+}
+
+.card .field {
+  text-align: left;
+  margin-bottom: 14px;
+}
+
+.card input {
+  background: rgba(255, 255, 255, 0.25);
+  font-style: italic;
+}
+
+.card input:not(:placeholder-shown) {
+  font-style: normal;
+}
+
+.wide {
+  width: 100%;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: #5b7bd5;
+  color: #fff;
+  font: 500 13px Inter, sans-serif;
+  cursor: pointer;
+}
+
+.wide:hover {
+  filter: brightness(1.08);
+}
+
+.back {
+  display: inline-flex;
+  gap: 8px;
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.mail {
+  margin: 0 auto 8px;
+  display: block;
+}
+
+.resend {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 12px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.resend:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ===== Toast message ===== */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(20px);
+  background: #222;
+  color: #fff;
+  font-size: 12px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  opacity: 0;
+  transition: 0.25s;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%);
+}
+
+/* ===== Responsive ===== */
+
+@media (max-width: 700px) {
+  .right {
+    display: none;
+  }
+}

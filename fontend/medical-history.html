@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" data-requires-login>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="hist.doctitle">Medical History | MEDIC CARE</title>
+  <script src="auth.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="medical-history.css">
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation" aria-hidden="true">
+    <div class="side-profile">
+      <div class="side-avatar" id="sideAvatar">FP</div>
+      <div class="side-info">
+        <strong id="sideName">Final Project</strong>
+        <span id="sideEmail">finalproject@gmail.com</span>
+      </div>
+      <button class="icon-btn light" id="closeSidebar" aria-label="Close menu" data-i18n-aria="menu.close">&times;</button>
+    </div>
+    <hr>
+    <label class="side-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" aria-hidden="true"><circle cx="10.500" cy="10.500" r="6.500"/><path d="m20 20-4.800-4.800"/></svg>
+      <input type="search" id="navSearch" placeholder="Search..." data-i18n-ph="nav.search" aria-label="Search menu" autocomplete="off">
+    </label>
+    <nav id="nav">
+      <a href="homepage.html"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 11.500 12 3l9 8.500V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span data-i18n="nav.dashboard">Dashboard</span></a>
+      <a href="profile.html"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="7.500" r="4.500"/><path d="M3.500 21c0-4.500 3.800-7 8.500-7s8.500 2.500 8.500 7z"/></svg><span data-i18n="nav.profile">Profile</span></a>
+      <a href="appointments.html"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zM5 9h14v11H5z"/><path d="M7 11h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zM7 15h2v2H7zm4 0h2v2h-2z"/></svg><span data-i18n="nav.appointment">Appointment</span></a>
+      <a href="medical-history.html" class="active" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm2 16H8v-2h8zm0-4H8v-2h8zm-3-5V3.500L18.500 9z"/></svg><span data-i18n="nav.history">Medical History</span></a>
+      <a href="settings.html"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.140 12.940c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.030-1.580a.49.49 0 0 0 .12-.61l-1.920-3.320a.488.488 0 0 0-.59-.22l-2.390.96c-.5-.38-1.030-.7-1.620-.94l-.36-2.540a.484.484 0 0 0-.48-.41h-3.840c-.24 0-.43.17-.47.41l-.36 2.540c-.59.24-1.130.57-1.620.94l-2.390-.96c-.22-.08-.47 0-.59.22L2.740 8.870c-.12.21-.08.47.12.61l2.030 1.580c-.05.3-.09.63-.09.94s.02.64.07.94l-2.030 1.580a.49.49 0 0 0-.12.61l1.920 3.320c.12.22.37.29.59.22l2.390-.96c.5.38 1.030.7 1.620.94l.36 2.540c.05.24.24.41.48.41h3.840c.24 0 .44-.17.47-.41l.36-2.540c.59-.24 1.130-.56 1.620-.94l2.390.96c.22.08.47 0 .59-.22l1.920-3.320c.12-.22.07-.47-.12-.61zM12 15.600c-1.980 0-3.600-1.620-3.600-3.600s1.620-3.600 3.600-3.600 3.600 1.620 3.600 3.600-1.620 3.600-3.600 3.600z"/></svg><span data-i18n="nav.settings">Settings</span></a>
+      <p class="no-match" id="noMatch" hidden data-i18n="nav.nomatch">No matching pages</p>
+    </nav>
+    <a href="index.html" class="logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h5a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1h-5M8 8l-4 4 4 4M4 12h11"/></svg><span data-i18n="nav.logout">Logout</span></a>
+  </aside>
+
+  <div class="page">
+    <!-- Header -->
+    <header class="topbar">
+      <button class="icon-btn" id="menuBtn" aria-label="Open menu" data-i18n-aria="menu.open" aria-expanded="false" aria-controls="sidebar">
+        <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M2 5h18M2 11h18M2 17h18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+      </button>
+      <div class="brand">
+        <span class="brand-name">MEDIC CARE</span>
+        <svg class="brand-logo" width="30" height="34" viewBox="0 0 34 38" aria-hidden="true">
+          <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2fb4c9"/><stop offset="1" stop-color="#2b4fb8"/></linearGradient></defs>
+          <path d="M17 1.5 31 6.5v11c0 9-6 15.5-14 19C9 33 3 26.500 3 17.500v-11z" fill="url(#sg)" stroke="#223c93" stroke-width="2"/>
+          <path d="M17 8.500 26 12v6c0 5.500-3.500 9.500-9 12-5.500-2.500-9-6.500-9-12v-6z" fill="#dff3f7" opacity=".35"/>
+          <path d="M14.500 12.500h5v4h4v5h-4v4h-5v-4h-4v-5h4z" fill="#fff"/>
+        </svg>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <main>
+      <div class="page-head history-head">
+        <h1 data-i18n="hist.h1">Medical History</h1>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Record types">
+        <button class="tab active" role="tab" aria-selected="true"  data-type="all" data-i18n="tab.all">All Records</button>
+        <button class="tab"        role="tab" aria-selected="false" data-type="consultation" data-i18n="tab.consultation">Consultations</button>
+        <button class="tab"        role="tab" aria-selected="false" data-type="lab" data-i18n="tab.lab">Lab Results</button>
+        <button class="tab"        role="tab" aria-selected="false" data-type="prescription" data-i18n="tab.prescription">Prescriptions</button>
+      </div>
+
+      <section class="table-card" aria-label="Medical records">
+        <div class="thead" role="row">
+          <button class="th-sort" id="sortDate" aria-label="Sort by date" data-i18n-aria="sort.date"><span data-i18n="th.date">Date</span><span class="arrows" aria-hidden="true"><i class="up"></i><i class="down"></i></span>
+          </button>
+          <div data-i18n="th.doctor">Doctors &amp; Specialty</div>
+          <div data-i18n="th.diag">Diagnosis</div>
+          <div><span class="sr-only" data-i18n="th.status">Status</span></div>
+          <div class="center" data-i18n="th.actions">Actions</div>
+        </div>
+        <div class="tbody" id="records" aria-live="polite"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Details modal -->
+  <div class="modal" id="detailsModal" role="dialog" aria-modal="true" aria-labelledby="detailsTitle" hidden>
+    <div class="modal-card">
+      <h2 id="detailsTitle" data-i18n="det.title">Record details</h2>
+      <dl class="details" id="detailsBody"></dl>
+      <div class="modal-actions">
+        <button class="btn-primary" data-close data-i18n="common.close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="medical-history.js"></script>
+</body>
+</html>

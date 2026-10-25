@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" data-requires-login>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book an Appointment</title>
+  <script src="auth.js"></script>
+  <link rel="stylesheet" href="booking.css">
+</head>
+<body>
+
+  <div class="booking-card">
+    <div class="card-header" id="main-header">
+      <a class="back-home" href="homepage.html">&larr; Home</a>
+      <h2 id="header-title">Book an Appointment</h2>
+      <p id="header-subtitle">Select your preferred service to get started.</p>
+      
+      <div class="stepper" id="app-stepper">
+        <div class="stepper-line"></div>
+        <div class="stepper-progress" id="stepper-progress"></div>
+        <div class="step-dot active" id="dot-1"></div>
+        <div class="step-dot" id="dot-2"></div>
+        <div class="step-dot" id="dot-3"></div>
+        <div class="step-dot" id="dot-4"></div>
+        <div class="step-dot" id="dot-5"></div>
+      </div>
+    </div>
+
+    <div class="card-body">
+
+      <div class="step-section active" id="step-1">
+        <div class="section-label">CHOOSE A SERVICE</div>
+        <div class="services-grid">
+          <div class="service-card" onclick="selectServiceCategory('OB', 'Obstetrics and Gynecology (OB, GYNE, Family Planning)', this)">
+            <span class="service-badge">OB</span>
+            <span class="service-title">OBSTETRICS AND GYNECOLOGY (OB, GYNE, FAMILY PLANNING)</span>
+          </div>
+          <div class="service-card selected" onclick="selectServiceCategory('IM', 'Internal Medicine Services (IM, Diabetes Mellitus, CP Clearance)', this)">
+            <span class="service-badge">IM</span>
+            <span class="service-title">INTERNAL MEDICINE SERVICES (IM, DIABETES MELLITUS, CP CLEARANCE)</span>
+          </div>
+          <div class="service-card" onclick="selectServiceCategory('PD', 'Pediatrics Services (Pedia, Newborn, School Clearance)', this)">
+            <span class="service-badge">PD</span>
+            <span class="service-title">PEDIATRICS SERVICES (PEDIA, NEWBORN, SCHOOL CLEARANCE)</span>
+          </div>
+          <div class="service-card" onclick="selectServiceCategory('GS', 'General Surgery', this)">
+            <span class="service-badge">GS</span>
+            <span class="service-title">GENERAL SURGERY</span>
+          </div>
+          <div class="service-card" onclick="selectServiceCategory('DS', 'Dental Services', this)">
+            <span class="service-badge">DS</span>
+            <span class="service-title">DENTAL SERVICES</span>
+          </div>
+          <div class="service-card" onclick="selectServiceCategory('SP', 'Subspec (Ophthal, Cardio, Derma)', this)">
+            <span class="service-badge">SP</span>
+            <span class="service-title">SUBSPEC (OPHTHAL, CARDIO, DERMA)</span>
+          </div>
+          <div class="service-card" onclick="selectServiceCategory('US', 'Ultrasound Services', this)">
+            <span class="service-badge">US</span>
+            <span class="service-title">ULTRASOUND SERVICES</span>
+          </div>
+          <div class="service-card" onclick="selectServiceCategory('OS', 'Other Services', this)">
+            <span class="service-badge">OS</span>
+            <span class="service-title">OTHER SERVICES</span>
+          </div>
+        </div>
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="nextStep()">Continue</button>
+        </div>
+      </div>
+
+      <div class="step-section" id="step-2">
+        <div class="section-label">SELECT SPECIFIC APPOINTMENT TYPE</div>
+        <div class="options-list" id="options-list-container"></div>
+        <div class="action-buttons">
+          <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+          <button class="btn btn-primary" onclick="nextStep()">Next</button>
+        </div>
+      </div>
+
+      <div class="step-section" id="step-3">
+        <div class="calendar-container">
+          <div>
+            <div class="section-label red-label">SELECT DATE *</div>
+            <div class="calendar-box">
+              <div class="calendar-header">
+                <span class="cal-nav" onclick="changeMonth(-1)">&lt;</span>
+                <span id="cal-month-title">October 2026</span>
+                <span class="cal-nav" onclick="changeMonth(1)">&gt;</span>
+              </div>
+              <div class="calendar-days-header">
+                <span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span>
+              </div>
+              <div class="calendar-days-grid" id="calendar-days"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="section-label red-label">SELECT TIME * <span class="opt-text">(8:00 AM &ndash; 4:00 PM)</span></div>
+            <div class="time-grid">
+              <button class="time-btn" onclick="selectTime('8:00 AM', this)">8:00 AM</button>
+              <button class="time-btn" onclick="selectTime('1:00 PM', this)">1:00 PM</button>
+              <button class="time-btn" onclick="selectTime('9:00 AM', this)">9:00 AM</button>
+              <button class="time-btn" onclick="selectTime('2:00 PM', this)">2:00 PM</button>
+              <button class="time-btn selected" onclick="selectTime('10:00 AM', this)">10:00 AM</button>
+              <button class="time-btn" onclick="selectTime('3:00 PM', this)">3:00 PM</button>
+              <button class="time-btn" onclick="selectTime('11:00 AM', this)">11:00 AM</button>
+            </div>
+
+            <div class="form-group" style="margin-top: 10px;">
+              <label class="section-label red-label" style="margin-bottom: 4px;">CHOOSE AVAILABLE DOCTOR *</label>
+              <select id="doctorSelect" class="form-control">
+                <option selected disabled value="">Select a specialist</option>
+              </select>
+              <span class="error-msg" id="err-doctor">Please choose an available doctor.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+          <button class="btn btn-primary" onclick="nextStep()">Next</button>
+        </div>
+      </div>
+
+      <div class="step-section" id="step-4">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>First Name</label>
+            <input type="text" id="fn" class="form-control" placeholder="e.g., James">
+            <span class="error-msg" id="err-fn">This field is required.</span>
+          </div>
+          <div class="form-group">
+            <label>Middle Name</label>
+            <input type="text" id="mn" class="form-control" placeholder="e.g., Magtagad">
+          </div>
+          <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" id="ln" class="form-control" placeholder="e.g., Pavia">
+            <span class="error-msg" id="err-ln">This field is required.</span>
+          </div>
+          <div class="form-group">
+            <label>Suffix <span class="opt-text">(Optional)</span></label>
+            <input type="text" id="suffix" class="form-control" placeholder="e.g., Jr., Sr., III">
+          </div>
+          <div class="form-group">
+            <label>Date of Birth</label>
+            <input type="date" id="dob" class="form-control">
+            <span class="error-msg" id="err-dob">Date of birth is required.</span>
+          </div>
+          <div class="form-group">
+            <label>Sex</label>
+            <select id="sex" class="form-control">
+              <option selected disabled value="">Select sex</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+            <span class="error-msg" id="err-sex">Please select sex.</span>
+          </div>
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="text" id="phone" class="form-control" placeholder="e.g., 09123456789">
+            <span class="error-msg" id="err-contact">Please provide either a phone number or email address.</span>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="email" class="form-control" placeholder="e.g., name@email.com">
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+          <button class="btn btn-primary" onclick="nextStep()">Next</button>
+        </div>
+      </div>
+
+      <div class="step-section" id="step-5">
+        <div class="review-details-container">
+          
+          <div class="review-block">
+            <div class="review-title">SERVICE DETAILS</div>
+            <div class="review-row">
+              <span class="review-key">SERVICE CATEGORY:</span>
+              <span class="review-val" id="rev-category">INTERNAL MEDICINE SERVICES</span>
+            </div>
+            <div class="review-row">
+              <span class="review-key">SPECIFIC SERVICE:</span>
+              <span class="review-val" id="rev-specific">GENERAL IM CONSULTATIONS</span>
+            </div>
+          </div>
+
+          <div class="review-divider"></div>
+
+          <div class="review-block">
+            <div class="review-title">SCHEDULE</div>
+            <div class="review-row">
+              <span class="review-key">DATE:</span>
+              <span class="review-val" id="rev-date">OCTOBER 15, 2026</span>
+            </div>
+            <div class="review-row">
+              <span class="review-key">TIME:</span>
+              <span class="review-val" id="rev-time">10:00 AM</span>
+            </div>
+            <div class="review-row">
+              <span class="review-key">ASSIGNED DOCTOR:</span>
+              <span class="review-val" id="rev-doctor">N/A</span>
+            </div>
+          </div>
+
+          <div class="review-divider"></div>
+
+          <div class="review-block">
+            <div class="review-title">PATIENT INFO</div>
+            <div class="review-row">
+              <span class="review-key">NAME:</span>
+              <span class="review-val" id="rev-name">JAMES MAGTAGAD PAVIA</span>
+            </div>
+            <div class="review-row">
+              <span class="review-key">DATE OF BIRTH:</span>
+              <span class="review-val" id="rev-dob">N/A</span>
+            </div>
+            <div class="review-row">
+              <span class="review-key">SEX:</span>
+              <span class="review-val" id="rev-sex">N/A</span>
+            </div>
+            <div class="review-row">
+              <span class="review-key">PHONE NUMBER:</span>
+              <span class="review-val" id="rev-phone">N/A</span>
+            </div>
+            <div class="review-row">
+              <span class="review-key">EMAIL ADDRESS:</span>
+              <span class="review-val" id="rev-email">N/A</span>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-secondary" onclick="prevStep()">Back</button>
+          <button class="btn btn-primary btn-submit" onclick="submitForm()">Submit & Confirm</button>
+        </div>
+      </div>
+
+      <div class="step-section" id="step-success">
+        <div class="success-container">
+          <div class="success-icon-box">✓</div>
+          <h3 class="success-title">Appointment Confirmed!</h3>
+          <p class="success-desc">Your appointment has been successfully submitted and saved. We look forward to seeing you.</p>
+          <div class="action-buttons" style="justify-content: center; width: 100%; margin-top: 10px;">
+            <a class="btn btn-secondary" href="homepage.html" style="text-decoration:none">Back to Home</a>
+            <button class="btn btn-primary" onclick="location.reload()">Book Another Appointment</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="booking.js"></script>
+</body>
+</html>
