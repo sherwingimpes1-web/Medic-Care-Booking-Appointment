@@ -28,7 +28,10 @@ $("signupForm").addEventListener("submit", (e) => {
   if (eId || ePw || eCf) { $(eId ? fields.id[0] : ePw ? fields.pw[0] : fields.cf[0]).focus(); return; }
 
   const res = Auth.createUser(id, pw);
-  if (!res.ok) { setErr("id", t("sig.err.exists")); $(fields.id[0]).focus(); return; }
+  if (!res.ok) {
+    const msg = { exists: "sig.err.exists", invalid_id: "sig.err.id", weak_password: "sig.err.len", network: "sig.err.network" }[res.error] || "sig.err.server";
+    setErr("id", t(msg)); $(fields.id[0]).focus(); return;
+  }
 
   location.href = "index.html?created=1";
 });
