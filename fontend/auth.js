@@ -64,11 +64,16 @@
 
   function createUser(raw, pw) {
     const r = call("POST", "/signup", { id: raw, password: pw });
-    return r.data && r.data.ok ? { ok: true, id: r.data.id } : { ok: false, error: (r.data && r.data.error) || "error" };
+    if (r.data && r.data.ok) return { ok: true, id: r.data.id };
+    // "exists" / "invalid_id" / "weak_password" come from the server; anything else is a server or network problem
+    const error = (r.data && r.data.error) || (r.status === 0 ? "network" : "server");
+    return { ok: false, error, status: r.status };
   }
   function verify(raw, pw) {
     const r = call("POST", "/verify", { id: raw, password: pw });
     if (r.data && r.data.ok) return { ok: true, id: r.data.id };
+    if (r.status === 0) return { ok: false, reason: "network" };
+    if (r.status >= 500) return { ok: false, reason: "server" };
     return { ok: false, reason: (r.data && r.data.reason) || "bad" };
   }
 
