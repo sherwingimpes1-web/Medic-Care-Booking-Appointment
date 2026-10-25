@@ -1,0 +1,19 @@
+# Render Blueprint: creates the MEDIC CARE web service from this repo.
+services:
+  - type: web
+    name: medic-care
+    runtime: python
+    plan: free
+    region: singapore            # pick the same region as your Supabase project if you can
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn --chdir backend app:app --workers 2 --threads 4 --timeout 30
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: SECRET_KEY            # signs the login cookies; Render makes a random one
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "1"
+      - key: DATABASE_URL          # you paste your Supabase connection string when asked
+        sync: false
