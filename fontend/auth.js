@@ -3,6 +3,11 @@
    Same pa rin ang mga function (Auth.createUser, Auth.verify, Auth.login, ...) kaya hindi
    kailangang galawin ang ibang pages.
 
+   FAST LOADING (new): the signed-in account is also kept in this tab's sessionStorage. A page
+   opens instantly from that copy and checks with the server in the background, so moving
+   between pages no longer waits for the server. Only the first page in a tab (or after
+   login) asks the server and waits.
+
    Paano gumagana:
      - Pag-load ng page, isang beses kukunin ang session + profile + data sa /api/me (cache).
      - Reads (profile, getData, getAppointments...) galing sa cache -> instant.
@@ -32,12 +37,50 @@
   }
 
   /* ---------- Cache of the signed-in account ---------- */
+  const root = document.documentElement;
+  const CACHE_KEY = "mcMe";
   let cache = null;                                              // { id, profile, data } or null
+  let writes = 0;                                                // counts saves, so a late background check can't overwrite them
+
+  function readSaved() { try { const s = sessionStorage.getItem(CACHE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+  function writeSaved() {
+    try { cache ? sessionStorage.setItem(CACHE_KEY, JSON.stringify(cache)) : sessionStorage.removeItem(CACHE_KEY); } catch (e) {}
+  }
+
+  // Blocking check (only used when this tab has no saved copy yet)
   function refresh() {
     const r = call("GET", "/me");
-    cache = r.status === 200 && r.data.user ? r.data.user : null;
+    if (r.status === 200) { cache = r.data.user || null; writeSaved(); }   // on a server error keep what we had
+    else if (!cache) writeSaved();
   }
-  refresh();
+
+  // Background check: never blocks the page
+  function revalidate() {
+    const startedAt = writes;
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open("GET", API + "/me");
+      xhr.onload = () => {
+        let data = null;
+        try { data = JSON.parse(xhr.responseText || "{}"); } catch (e) {}
+        if (xhr.status !== 200 || !data) return;               // server problem: keep using the saved copy
+        const user = data.user || null;
+        if (!user) {                                           // the login really ended
+          cache = null; writeSaved();
+          if (root.hasAttribute("data-requires-login")) location.replace(LOGIN);
+          return;
+        }
+        if (root.hasAttribute("data-guest-only")) { cache = user; writeSaved(); location.replace(HOME); return; }
+        if (writes === startedAt) { cache = user; writeSaved(); hydrateSidebar(); }   // fresh data (skipped if you saved something meanwhile)
+      };
+      xhr.send();
+    } catch (e) {}
+  }
+
+  cache = readSaved();
+  if (cache) revalidate();                                       // open instantly from the saved copy
+  else if (root.hasAttribute("data-guest-only")) revalidate();   // login / sign-up page: don't make the visitor wait
+  else refresh();                                                // first page of this tab: we must know who is signed in
 
   /* ---------- Email / phone ---------- */
   function normalize(raw) {
@@ -79,18 +122,19 @@
 
   const current = () => (cache ? cache.id : null);
   function login(raw) { call("POST", "/login", { id: raw }); refresh(); }
-  function logout() { call("POST", "/logout"); cache = null; }
+  function logout() { call("POST", "/logout"); cache = null; writeSaved(); }
 
   const profile = () => (cache ? { ...defaultProfile(cache.id), ...cache.profile } : defaultProfile(""));
   function saveProfile(patch) {
     if (!cache) return null;
     const r = call("PUT", "/profile", patch);
-    if (r.data && r.data.ok) cache.profile = r.data.profile;
+    writes++;
+    if (r.data && r.data.ok) { cache.profile = r.data.profile; writeSaved(); }
     return null;
   }
   const checkPassword = (pw) => { if (!cache) return false; const r = call("POST", "/password/check", { password: pw }); return !!(r.data && r.data.ok); };
   const setPassword = (pw) => { if (cache) call("PUT", "/password", { password: pw }); };
-  function deleteAccount() { if (!cache) return; call("DELETE", "/account"); cache = null; }
+  function deleteAccount() { if (!cache) return; call("DELETE", "/account"); cache = null; writeSaved(); }
 
   // Per-account data (appointments, records…)
   function getData(key, fallback) {
@@ -100,6 +144,8 @@
     if (!cache) return null;
     cache.data = cache.data || {};
     cache.data[key] = value;
+    writes++;
+    writeSaved();
     call("PUT", "/data/" + encodeURIComponent(key), { value });
     return null;
   }
@@ -117,7 +163,6 @@
   }
 
   /* ---------- Page guard (runs immediately) ---------- */
-  const root = document.documentElement;
   if (root.hasAttribute("data-requires-login") && !current()) location.replace(LOGIN);
   else if (root.hasAttribute("data-guest-only") && current()) location.replace(HOME);
 
